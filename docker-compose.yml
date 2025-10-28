@@ -1,0 +1,62 @@
+services:
+  # Development service
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - '${HOST_PORT:-3000}:${PORT:-3000}'
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - sqlite-data:/data
+    environment:
+      - NODE_ENV=development
+      - PORT=${PORT:-3000}
+      # Uncomment to test SQLite in dev:
+      # - STORAGE_ADAPTER=sqlite
+      # - SQLITE_DB_PATH=/data/inventory.db
+    command: ['sh', '-c', 'npm ci && npm run dev']
+    profiles:
+      - dev
+
+  # Production service
+  api-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - '${HOST_PORT:-3000}:${PORT:-3000}'
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-3000}
+      - STORAGE_ADAPTER=sqlite
+      - SQLITE_DB_PATH=/data/inventory.db
+    volumes:
+      - sqlite-data:/data
+    profiles:
+      - prod
+
+  # Default production service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - '${HOST_PORT:-3000}:${PORT:-3000}'
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-3000}
+      - STORAGE_ADAPTER=sqlite
+      - SQLITE_DB_PATH=/data/inventory.db
+    volumes:
+      - sqlite-data:/data
+    restart: unless-stopped
+    profiles:
+      - prod
+
+volumes:
+  sqlite-data:
